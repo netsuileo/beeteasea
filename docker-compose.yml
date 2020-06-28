@@ -1,0 +1,26 @@
+version: '3.4'
+
+services:
+  api:
+    container_name: beeteesea-api
+    build:
+      context: .
+      dockerfile: compose/api/Dockerfile
+    command: sh scripts/run.sh
+    expose:
+      - "5000"
+
+  postgres:
+    container_name: beeteesea-postgres
+    image: postgres:12.2
+    environment:
+      - POSTGRES_DB=beeteesea
+      - POSTGRES_USER=beeteesea
+      - POSTGRES_PASSWORD=beeteesea
+    expose:
+      - "5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
