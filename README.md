@@ -7,9 +7,9 @@ TODO:
 - [x] Start project
 - [x] User authentication
 - [x] Create user API
-- [ ] Create wallet API
+- [x] Create wallet API
 - [ ] Fetch current BTC exchange rate mechanics
-- [ ] Get wallet balance API
+- [x] Get wallet balance API
 - [ ] Create transaction API
 - [ ] Get user transactions API
 - [ ] Get wallet transactions API
