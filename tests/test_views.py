@@ -1,8 +1,5 @@
-import os
-import tempfile
-
 import pytest
-
+from unittest.mock import patch
 from api import app as api
 from .helpers import (
     get_auth_headers,
@@ -35,17 +32,20 @@ def test_create_user(client):
     assert resp.json['token'] is not None
 
 
-
-def test_create_wallet(client):
+@patch('api.app.exchange_rates_generator')
+def test_create_wallet(exchange_rate_mock, client):
     URL = '/api/wallets'
+    exchange_rate_mock.__next__.return_value = 5000 / 100_000_000
 
     # TODO: Move create user into separate helper or fixture
     user = create_user()
 
     # Test wallet created successfully
+    # TODO: mock exchange_rates_generator
     resp = client.post(URL, headers=get_auth_headers(user.token))
     assert resp.status_code == 201
     assert resp.json['balance'] == api.ONE_BTC
+    assert resp.json['usd_balance'] == "5000.00"
     assert resp.json['address'] is not None
 
     # Test cannot create more than 10 wallets
@@ -55,7 +55,9 @@ def test_create_wallet(client):
     assert resp.status_code == 400
 
 
-def test_get_wallet(client):
+@patch('api.app.exchange_rates_generator')
+def test_get_wallet(exchange_rate_mock, client):
+    exchange_rate_mock.__next__.return_value = 5000 / 100_000_000
     user = create_user()
     wallet = create_wallet(user)
 
@@ -65,6 +67,7 @@ def test_get_wallet(client):
     assert resp.status_code == 200
     assert resp.json['address'] == wallet.address
     assert resp.json['balance'] == api.ONE_BTC
+    assert resp.json['usd_balance'] == "5000.00"
 
     # Test get non existing wallet
     URL = f'/api/wallets/{get_random_string(40)}'

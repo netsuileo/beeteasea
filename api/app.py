@@ -8,7 +8,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
+from marshmallow import fields as ma_fields
 import bitcoin
+from .exchange_rates import exchange_rate
 
 
 # Application
@@ -26,6 +28,11 @@ app.config.update(
 # ----------------------------------------------------------------
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+# ----------------------------------------------------------------
+
+# Exchange rates
+# ----------------------------------------------------------------
+exchange_rates_generator = exchange_rate()
 # ----------------------------------------------------------------
 
 
@@ -105,7 +112,13 @@ users_schema = UserSchema(many=True)
 
 class WalletSchema(ma.Schema):
     class Meta:
-        fields = ("address", "balance")
+        fields = ("address", "balance", "usd_balance")
+
+    usd_balance = ma_fields.Method("get_usd_balance")
+
+    def get_usd_balance(self, obj):
+        rate = next(exchange_rates_generator)
+        return "{:.2f}".format(rate * obj.balance)
 
 wallet_schema = WalletSchema()
 wallets_schema = WalletSchema(many=True)
