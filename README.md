@@ -5,8 +5,8 @@ BTC exchange platform "🐝☕🌊"
 
 TODO:
 - [x] Start project
-- [ ] User authentication
-- [ ] Create user API
+- [x] User authentication
+- [x] Create user API
 - [ ] Create wallet API
 - [ ] Fetch current BTC exchange rate mechanics
 - [ ] Get wallet balance API
