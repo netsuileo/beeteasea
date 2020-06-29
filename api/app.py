@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
+import bitcoin
 
 
 # Application
@@ -30,6 +31,8 @@ migrate = Migrate(app, db)
 
 # Models
 # ----------------------------------------------------------------
+ONE_BTC = 100_000_000  # in Satoshi
+
 def generate_token():
     return token_hex(32)
 
@@ -41,7 +44,21 @@ class User(db.Model):
                       unique=True, default=generate_token)
 
     def __repr__(self):
-        return f'<User {self.nickname} ({self.token})>'
+        return f'<User {self.name} (token: {self.token})>'
+
+
+class Wallet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    private_key = db.Column(db.String(64), nullable=False)
+    public_key = db.Column(db.String(130), nullable=False)
+    address = db.Column(db.String(35), nullable=False, unique=True)
+    balance = db.Column(db.BigInteger, nullable=False, default=ONE_BTC)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref=db.backref('wallets'))
+
+    def __repr__(self):
+        return f'<Wallet {self.address} (balance: {self.balance} satoshi)>'
 # ----------------------------------------------------------------
 
 
@@ -67,6 +84,10 @@ def verify_token(token):
         return User.query.filter(User.token == token).one().name
     except NoResultFound:
         return None
+
+
+def current_user():
+    return User.query.filter(User.name == auth.current_user()).one()
 # ----------------------------------------------------------------
 
 
@@ -80,6 +101,14 @@ class UserSchema(ma.Schema):
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+
+
+class WalletSchema(ma.Schema):
+    class Meta:
+        fields = ("address", "balance")
+
+wallet_schema = WalletSchema()
+wallets_schema = WalletSchema(many=True)
 # ----------------------------------------------------------------
 
 
@@ -104,15 +133,33 @@ def create_user():
 def create_wallet():
     """ Create new wallet for user """
     # Create wallet
-    # TODO
-    return jsonify({'error': 'Not implemented'}), 501
+    user = current_user()
+    if len(user.wallets) >= 10:
+        return jsonify({'error': 'User already has 10 wallets'}), 400
+
+    private_key = bitcoin.random_key()
+    public_key = bitcoin.privtopub(private_key)
+    address = bitcoin.pubtoaddr(public_key)
+
+    new_wallet = Wallet(
+        user=user, private_key=private_key,
+        public_key=public_key, address=address)
+    db.session.add(new_wallet)
+    db.session.commit()
+    return wallet_schema.dump(new_wallet), 201
 
 
-@app.route('/api/wallets/:address', methods=['GET'])
+@app.route('/api/wallets/<address>', methods=['GET'])
 @auth.login_required(role='user')
-def get_wallet():
-    # TODO
-    return jsonify({'error': 'Not implemented'}), 501
+def get_wallet(address):
+    user = current_user()
+    try:
+        wallet = Wallet.query.filter(
+            Wallet.user == user, Wallet.address == address
+        ).one()
+        return wallet_schema.dump(wallet), 200
+    except NoResultFound:
+        return jsonify({'error': 'Not found'}), 404
 
 
 @app.route('/api/wallets/:address/transactions', methods=['GET'])
