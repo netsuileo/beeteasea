@@ -10,8 +10,25 @@ from .helpers import get_auth_headers
 @pytest.fixture
 def client():
     api.app.config['TESTING'] = True
+    api.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+    api.db.create_all()
     with api.app.test_client() as client:
         yield client
+
+
+def test_create_user(client):
+    URL = '/api/users'
+
+    # Test wrong json
+    # TODO: add json validation first
+    # resp = client.post(URL, json={'some_invalid': 'field'})
+    # assert resp.status_code == 400
+
+    # Test create new user
+    resp = client.post(URL, json={'name': 'satoshi'})
+    assert resp.status_code == 201
+    assert resp.json['name'] == 'satoshi'
+    assert resp.json['token'] is not None
 
 
 def test_statistics(client):
