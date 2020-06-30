@@ -1,12 +1,12 @@
-import pytest
 from unittest.mock import patch
-from api.models import db, ONE_BTC
+from api.models import ONE_BTC
 from api.auth import ADMIN_TOKEN
 from tests.helpers import (
     get_auth_headers,
     get_random_string,
     create_user,
-    create_wallet
+    create_wallet,
+    create_transaction
 )
 
 
@@ -28,12 +28,9 @@ def test_create_user(client):
 def test_create_wallet(exchange_rate_mock, client):
     URL = '/api/wallets'
     exchange_rate_mock.__next__.return_value = 5000 / 100_000_000
-
-    # TODO: Move create user into separate helper or fixture
     user = create_user()
 
     # Test wallet created successfully
-    # TODO: mock exchange_rates_generator
     resp = client.post(URL, headers=get_auth_headers(user.token))
     assert resp.status_code == 201
     assert resp.json['balance'] == ONE_BTC
@@ -72,7 +69,7 @@ def test_create_transaction(client):
     source_wallet = create_wallet(user)
     destination_wallet = create_wallet(user)
 
-    URL = f'/api/transactions'
+    URL = '/api/transactions'
     resp = client.post(URL, headers=get_auth_headers(user.token), json=dict(
         source=source_wallet.address,
         destination=destination_wallet.address,
@@ -85,6 +82,85 @@ def test_create_transaction(client):
     assert resp.json['timestamp'] is not None
 
 
+def test_get_wallet_transactions(client):
+    user_1 = create_user()
+    user_2 = create_user()
+    wallet_1 = create_wallet(user_1)
+    wallet_2 = create_wallet(user_2)
+
+    create_transaction(wallet_1, wallet_2, 1000)
+    create_transaction(wallet_2, wallet_1, 2000)
+
+    URL_1 = f'/api/wallets/{wallet_1.address}/transactions'
+    resp_1 = client.get(URL_1, headers=get_auth_headers(user_1.token))
+    assert resp_1.status_code == 200
+    transactions_1 = resp_1.json['transactions']
+    assert transactions_1[0]['source'] == wallet_1.address
+    assert transactions_1[0]['destination'] == wallet_2.address
+    assert transactions_1[0]['amount'] == 1000
+    assert transactions_1[1]['source'] == wallet_2.address
+    assert transactions_1[1]['destination'] == wallet_1.address
+    assert transactions_1[1]['amount'] == 2000
+
+    URL_2 = f'/api/wallets/{wallet_2.address}/transactions'
+    resp_2 = client.get(URL_2, headers=get_auth_headers(user_2.token))
+    assert resp_1.status_code == 200
+    transactions_2 = resp_2.json['transactions']
+    for t_1, t_2 in zip(transactions_1, transactions_2):
+        assert t_1 == t_2
+
+
+def test_get_user_transactions(client):
+    user_1 = create_user()
+    user_2 = create_user()
+    wallet_1 = create_wallet(user_1)
+    wallet_2 = create_wallet(user_2)
+    wallet_3 = create_wallet(user_2)
+
+    create_transaction(wallet_1, wallet_2, 1000)
+    create_transaction(wallet_2, wallet_1, 2000)
+    create_transaction(wallet_2, wallet_3, 3000)
+    create_transaction(wallet_3, wallet_1, 4000)
+
+    URL = '/api/transactions'
+    resp_1 = client.get(URL, headers=get_auth_headers(user_1.token))
+    assert resp_1.status_code == 200
+
+    transactions_1 = resp_1.json['transactions']
+
+    assert transactions_1[0]['source'] == wallet_1.address
+    assert transactions_1[0]['destination'] == wallet_2.address
+    assert transactions_1[0]['amount'] == 1000
+
+    assert transactions_1[1]['source'] == wallet_2.address
+    assert transactions_1[1]['destination'] == wallet_1.address
+    assert transactions_1[1]['amount'] == 2000
+
+    assert transactions_1[2]['source'] == wallet_3.address
+    assert transactions_1[2]['destination'] == wallet_1.address
+    assert transactions_1[2]['amount'] == 4000
+
+    resp_2 = client.get(URL, headers=get_auth_headers(user_2.token))
+    assert resp_2.status_code == 200
+
+    transactions_2 = resp_2.json['transactions']
+    assert transactions_2[0]['source'] == wallet_1.address
+    assert transactions_2[0]['destination'] == wallet_2.address
+    assert transactions_2[0]['amount'] == 1000
+
+    assert transactions_2[1]['source'] == wallet_2.address
+    assert transactions_2[1]['destination'] == wallet_1.address
+    assert transactions_2[1]['amount'] == 2000
+
+    assert transactions_2[2]['source'] == wallet_2.address
+    assert transactions_2[2]['destination'] == wallet_3.address
+    assert transactions_2[2]['amount'] == 3000
+
+    assert transactions_2[3]['source'] == wallet_3.address
+    assert transactions_2[3]['destination'] == wallet_1.address
+    assert transactions_2[3]['amount'] == 4000
+
+
 def test_statistics(client):
     URL = '/api/statistics'
     # Test authentication failed
@@ -94,7 +170,7 @@ def test_statistics(client):
     # Test authentication succeed
     resp = client.get(URL, headers=get_auth_headers(ADMIN_TOKEN))
     assert resp.status_code == 200
-    
+
     # Test data is correct
     # TODO: Add some data into database
     # TODO: Test statistics contains this data

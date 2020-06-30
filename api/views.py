@@ -1,5 +1,6 @@
 from functools import wraps
 from flask import Blueprint, jsonify, request
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from marshmallow.exceptions import ValidationError
@@ -12,7 +13,8 @@ from .schemas import (
     create_transaction_schema,
     user_schema,
     wallet_schema,
-    transaction_schema
+    transaction_schema,
+    transactions_schema
 )
 
 
@@ -81,18 +83,34 @@ def get_wallet(address):
         return jsonify({'error': 'Not found'}), 404
 
 
-@views.route('/api/wallets/:address/transactions', methods=['GET'])
+@views.route('/api/wallets/<address>/transactions', methods=['GET'])
 @auth.login_required(role='user')
-def get_wallet_transactions():
-    # TODO
-    return jsonify({'error': 'Not implemented'}), 501
+def get_wallet_transactions(address):
+    user = current_user()
+    try:
+        wallet = Wallet.query.filter(
+            Wallet.user == user, Wallet.address == address).one()
+    except NoResultFound:
+        return jsonify({'error': 'Not found'}), 404
+    transactions = Transaction.query.filter(or_(
+        Transaction.source == wallet.address,
+        Transaction.destination == wallet.address)).order_by(
+            Transaction.timestamp)
+    return jsonify(dict(
+        transactions=transactions_schema.dump(transactions))), 200
 
 
 @views.route('/api/transactions', methods=['GET'])
 @auth.login_required(role='user')
 def get_user_transactions():
-    # TODO
-    return jsonify({'error': 'Not implemented'}), 501
+    user = current_user()
+    wallets = Wallet.query.filter(Wallet.user == user).values(Wallet.address)
+    wallets = [w[0] for w in wallets]
+    transactions = Transaction.query.filter(or_(
+        Transaction.source.in_(wallets),
+        Transaction.destination.in_(wallets))).order_by(Transaction.timestamp)
+    return jsonify(dict(
+        transactions=transactions_schema.dump(transactions))), 200
 
 
 @views.route('/api/transactions', methods=['POST'])

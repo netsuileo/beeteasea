@@ -1,6 +1,6 @@
 import random
 import string
-from api.models import db, User, Wallet
+from api.models import db, User, Wallet, Transaction
 
 
 def get_random_string(length):
@@ -28,3 +28,11 @@ def create_wallet(user):
     db.session.add(wallet)
     db.session.commit()
     return wallet
+
+
+def create_transaction(source, destination, amount):
+    transaction = Transaction(
+        source=source.address, destination=destination.address, amount=amount)
+    db.session.add(transaction)
+    db.session.commit()
+    return transaction

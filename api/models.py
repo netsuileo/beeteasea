@@ -47,4 +47,4 @@ class Transaction(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<Transaction {self.address} (timestamp: {self.timestamp})>'
+        return f'<Transaction {self.amount} (timestamp: {self.timestamp})>'

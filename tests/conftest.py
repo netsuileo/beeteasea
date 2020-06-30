@@ -8,9 +8,9 @@ def client():
     CONFIG['TESTING'] = True
     CONFIG['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
     app = create_app()
-    
+
     client = app.test_client()
-    
+
     ctx = app.app_context()
     ctx.push()
 

@@ -11,6 +11,7 @@ TODO:
 - [x] Fetch current BTC exchange rate mechanics
 - [x] Get wallet balance API
 - [x] Create transaction API
-- [ ] Get user transactions API
-- [ ] Get wallet transactions API
+- [x] Get user transactions API
+- [x] Get wallet transactions API
 - [ ] Get admin statistics API
+- [ ] Instructions in README
