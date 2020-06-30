@@ -14,7 +14,7 @@ def exchange_rate():
             exchange_rate = fetch_exchange_rate()
             timestamp = datetime.now()
         yield exchange_rate
-            
+
 
 def fetch_exchange_rate():
     request = Request('https://paxful.com/api/currency/btc')

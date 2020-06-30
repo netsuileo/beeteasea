@@ -1,5 +1,5 @@
 from secrets import token_hex
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
 
@@ -7,6 +7,7 @@ db = SQLAlchemy()
 
 
 ONE_BTC = 100_000_000  # in Satoshi
+
 
 def generate_token():
     return token_hex(32)
@@ -41,9 +42,9 @@ class Transaction(db.Model):
     source = db.Column(db.String(35), db.ForeignKey('wallet.address'),
                        nullable=False)
     destination = db.Column(db.String(35), db.ForeignKey('wallet.address'),
-                       nullable=False)
+                            nullable=False)
     amount = db.Column(db.BigInteger, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+
     def __repr__(self):
         return f'<Transaction {self.address} (timestamp: {self.timestamp})>'
