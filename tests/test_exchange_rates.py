@@ -1,5 +1,5 @@
 from datetime import datetime
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch
 from api import exchange_rates
 
 
@@ -9,10 +9,9 @@ def test_exchange_rates_generator(mock_urlopen):
         "price": "10000.00",
         "currency": "USD"
     }'''
-    
+
     exchange_rate_generator = exchange_rates.exchange_rate()
     assert next(exchange_rate_generator) == 10000 / 100_000_000
-
 
     mock_urlopen.return_value.__enter__.return_value.read = lambda: b'''{
         "price": "5000.00",

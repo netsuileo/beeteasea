@@ -1,6 +1,6 @@
 import random
 import string
-from api import app as api
+from api.models import db, User, Wallet, Transaction
 
 
 def get_random_string(length):
@@ -15,16 +15,24 @@ def get_auth_headers(token):
 
 
 def create_user():
-    user = api.User(name=get_random_string(20))
-    api.db.session.add(user)
-    api.db.session.commit()
+    user = User(name=get_random_string(20))
+    db.session.add(user)
+    db.session.commit()
     return user
 
 
 def create_wallet(user):
-    wallet = api.Wallet(user=user, address=get_random_string(40),
-                        private_key=get_random_string(64),
-                        public_key=get_random_string(130))
-    api.db.session.add(wallet)
-    api.db.session.commit()
+    wallet = Wallet(user=user, address=get_random_string(40),
+                    private_key=get_random_string(64),
+                    public_key=get_random_string(130))
+    db.session.add(wallet)
+    db.session.commit()
     return wallet
+
+
+def create_transaction(source, destination, amount):
+    transaction = Transaction(
+        source=source.address, destination=destination.address, amount=amount)
+    db.session.add(transaction)
+    db.session.commit()
+    return transaction
