@@ -1,3 +1,8 @@
+import sys, os
+path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, path + '/../')
+
+
 from datetime import datetime
 from unittest.mock import patch, Mock, MagicMock
 from api import exchange_rates
