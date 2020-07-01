@@ -13,5 +13,5 @@ TODO:
 - [x] Create transaction API
 - [x] Get user transactions API
 - [x] Get wallet transactions API
-- [ ] Get admin statistics API
+- [x] Get admin statistics API
 - [ ] Instructions in README
