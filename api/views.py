@@ -21,6 +21,10 @@ from .schemas import (
 views = Blueprint('main', __name__)
 
 
+# 1.5% of service fee from every transaction between users
+SERVICE_FEE = 0.015
+
+
 def validate_json(schema):
     def decorator(func):
         @wraps(func)
@@ -125,15 +129,20 @@ def create_transaction():
         Wallet.address == json['destination']).one()
     amount = json['amount']
 
+    if source.user == destination.user:
+        cost = 0
+    else:
+        cost = SERVICE_FEE * amount
+    if source.balance - amount - cost < 0:
+        return jsonify({'error': 'Source balance is insufficient.'}), 400
+
     new_transaction = Transaction(
         source=source.address,
         destination=destination.address,
-        amount=amount)
+        amount=amount,
+        cost=cost)
 
-    if source.balance - amount < 0:
-        return jsonify({'error': 'Source balance is insufficient.'}), 400
-
-    source.balance -= amount
+    source.balance = source.balance - amount - cost
     destination.balance += amount
     db.session.add(new_transaction)
     db.session.add(source)
@@ -145,5 +154,10 @@ def create_transaction():
 @views.route('/api/statistics', methods=['GET'])
 @auth.login_required(role='admin')
 def statistics():
-    # TODO: return real statistics
-    return jsonify([])
+    transactions_amount = Transaction.query.count()
+    platform_profit = Transaction.query.with_entities(
+        db.func.sum(Transaction.cost).label("sum_cost")).one()[0]
+    return jsonify({
+        'transactions_amount': transactions_amount,
+        'platform_profit': platform_profit
+    })

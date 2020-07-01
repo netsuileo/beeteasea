@@ -44,6 +44,7 @@ class Transaction(db.Model):
     destination = db.Column(db.String(35), db.ForeignKey('wallet.address'),
                             nullable=False)
     amount = db.Column(db.BigInteger, nullable=False)
+    cost = db.Column(db.BigInteger, nullable=False, default=0)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
