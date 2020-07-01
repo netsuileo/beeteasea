@@ -1,6 +1,5 @@
 from unittest.mock import patch
-from api.models import ONE_BTC
-from api.auth import ADMIN_TOKEN
+from api.constants import ADMIN_TOKEN, ONE_BTC
 from tests.helpers import (
     get_auth_headers,
     get_random_string,
@@ -24,7 +23,7 @@ def test_create_user(client):
     assert resp.json['token'] is not None
 
 
-@patch('api.schemas.exchange_rates_generator')
+@patch('api.exchange_rates.exchange_rates_generator')
 def test_create_wallet(exchange_rate_mock, client):
     URL = '/api/wallets'
     exchange_rate_mock.__next__.return_value = 5000 / 100_000_000
@@ -44,7 +43,7 @@ def test_create_wallet(exchange_rate_mock, client):
     assert resp.status_code == 400
 
 
-@patch('api.schemas.exchange_rates_generator')
+@patch('api.exchange_rates.exchange_rates_generator')
 def test_get_wallet(exchange_rate_mock, client):
     exchange_rate_mock.__next__.return_value = 5000 / 100_000_000
     user = create_user()
@@ -83,7 +82,6 @@ def test_create_transaction(client):
     assert resp.json['amount'] == 1000
     assert resp.json['cost'] == 0
     assert resp.json['timestamp'] is not None
-
 
     resp = client.post(URL, headers=get_auth_headers(user.token), json=dict(
         source=source_wallet.address,

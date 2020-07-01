@@ -1,14 +1,13 @@
 from flask import Flask
 from flask_migrate import Migrate
 from .models import db
-from .auth import auth
 from .schemas import ma
 from .views import views
 
 CONFIG = dict(
     DEBUG=True,
     SECRET_KEY='satoshi_HUoiFQzMcjNysgWz9HU5BQ_nakamoto',
-    SQLALCHEMY_DATABASE_URI='postgresql://beeteesea:beeteesea@postgres/beeteesea'
+    SQLALCHEMY_DATABASE_URI='postgresql://beeteesea:beeteesea@postgres/beeteesea'  # noqa E501
 )
 
 

@@ -1,12 +1,9 @@
 from secrets import token_hex
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-
+from .constants import ONE_BTC
 
 db = SQLAlchemy()
-
-
-ONE_BTC = 100_000_000  # in Satoshi
 
 
 def generate_token():

@@ -7,7 +7,7 @@ BTC exchange platform "🐝☕🌊"
 
 To run platform execute
 ```
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+make run
 ```
 
 To apply database migrations run (required with first application run):
@@ -18,6 +18,13 @@ flask db upgrade
 ```
 
 Then API endpoints will be availiable at http://localhost:5000/api/
+
+## How to test
+
+To run tests execute
+```
+make test
+```
 
 ## API endpoints
 

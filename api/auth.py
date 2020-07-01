@@ -1,13 +1,10 @@
 from sqlalchemy.orm.exc import NoResultFound
 from flask_httpauth import HTTPTokenAuth
+from .constants import ADMIN_USERNAME, ADMIN_TOKEN
 from .models import User
 
 
 auth = HTTPTokenAuth()
-
-
-ADMIN_USERNAME = "admin"
-ADMIN_TOKEN = "melon"
 
 
 @auth.get_user_roles

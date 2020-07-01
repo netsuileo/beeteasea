@@ -1,11 +1,10 @@
 from flask_marshmallow import Marshmallow
 from marshmallow import fields as ma_fields
 from marshmallow.validate import Range
-from .exchange_rates import exchange_rate
+from .exchange_rates import get_current_exchange_rate
 
 
 ma = Marshmallow()
-exchange_rates_generator = exchange_rate()
 
 
 class UserSchema(ma.Schema):
@@ -31,7 +30,7 @@ class WalletSchema(ma.Schema):
     usd_balance = ma_fields.Method("get_usd_balance")
 
     def get_usd_balance(self, obj):
-        rate = next(exchange_rates_generator)
+        rate = get_current_exchange_rate()
         return "{:.2f}".format(rate * obj.balance)
 
 

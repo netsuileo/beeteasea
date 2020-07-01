@@ -5,7 +5,7 @@ from api.models import db, User, Wallet, Transaction
 
 def get_random_string(length):
     letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(length))
+    return ''.join(random.choice(letters) for _ in range(length))
 
 
 def get_auth_headers(token):

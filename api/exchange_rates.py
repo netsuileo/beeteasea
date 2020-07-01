@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from urllib.request import Request, urlopen
 from datetime import datetime, timedelta
 
@@ -22,4 +23,13 @@ def fetch_exchange_rate():
     request.add_header('Accept', 'application/json')
     with urlopen(request) as response:
         text = response.read()
-        return float(json.loads(text, encoding='utf-8')['price']) / 100_000_000
+        return Decimal(
+            json.loads(text, encoding='utf-8')['price']
+        ) / 100_000_000
+
+
+exchange_rates_generator = exchange_rate()
+
+
+def get_current_exchange_rate():
+    return next(exchange_rates_generator)
