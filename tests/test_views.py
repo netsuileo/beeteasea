@@ -69,6 +69,8 @@ def test_create_transaction(client):
     source_wallet = create_wallet(user)
     destination_wallet = create_wallet(user)
 
+    other_user_wallet = create_wallet(create_user())
+
     URL = '/api/transactions'
     resp = client.post(URL, headers=get_auth_headers(user.token), json=dict(
         source=source_wallet.address,
@@ -79,6 +81,20 @@ def test_create_transaction(client):
     assert resp.json['source'] == source_wallet.address
     assert resp.json['destination'] == destination_wallet.address
     assert resp.json['amount'] == 1000
+    assert resp.json['cost'] == 0
+    assert resp.json['timestamp'] is not None
+
+
+    resp = client.post(URL, headers=get_auth_headers(user.token), json=dict(
+        source=source_wallet.address,
+        destination=other_user_wallet.address,
+        amount=2000
+    ))
+    assert resp.status_code == 201
+    assert resp.json['source'] == source_wallet.address
+    assert resp.json['destination'] == other_user_wallet.address
+    assert resp.json['amount'] == 2000
+    assert resp.json['cost'] == 30
     assert resp.json['timestamp'] is not None
 
 
@@ -167,11 +183,31 @@ def test_statistics(client):
     resp = client.get(URL)
     assert resp.status_code == 401
 
-    # Test authentication succeed
+    # Test authentication succeed and data is correct
+    user_1 = create_user()
+    user_2 = create_user()
+    wallet_1 = create_wallet(user_1)
+    wallet_2 = create_wallet(user_2)
+    wallet_3 = create_wallet(user_2)
+
+    create_transaction_via_api(client, user_1, wallet_1, wallet_2, 1000)
+    create_transaction_via_api(client, user_2, wallet_2, wallet_1, 2000)
+    create_transaction_via_api(client, user_2, wallet_2, wallet_3, 3000)
+    create_transaction_via_api(client, user_2, wallet_3, wallet_1, 4000)
+
     resp = client.get(URL, headers=get_auth_headers(ADMIN_TOKEN))
     assert resp.status_code == 200
 
-    # Test data is correct
-    # TODO: Add some data into database
-    # TODO: Test statistics contains this data
-    assert resp.json == []
+    assert resp.json == {
+        'transactions_amount': 4,
+        'platform_profit': 105
+    }
+
+
+def create_transaction_via_api(client, user, source, destination, amount):
+    URL = '/api/transactions'
+    client.post(URL, headers=get_auth_headers(user.token), json=dict(
+        source=source.address,
+        destination=destination.address,
+        amount=amount
+    ))

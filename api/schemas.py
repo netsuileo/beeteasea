@@ -41,7 +41,7 @@ wallets_schema = WalletSchema(many=True)
 
 class TransactionSchema(ma.Schema):
     class Meta:
-        fields = ("source", "destination", "amount", "timestamp")
+        fields = ("source", "destination", "amount", "cost", "timestamp")
 
 
 transaction_schema = TransactionSchema()

@@ -14,8 +14,13 @@ def client():
     ctx = app.app_context()
     ctx.push()
 
-    db.create_all()
-
     yield client
 
     ctx.pop()
+
+
+@pytest.fixture(autouse=True)
+def init_database(client):
+    db.create_all()
+    yield
+    db.drop_all()
