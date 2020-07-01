@@ -5,7 +5,17 @@ BTC exchange platform "🐝☕🌊"
 
 ## How to run
 
-To run platform execute `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
+To run platform execute
+```
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+To apply database migrations run (required with first application run):
+```
+docker-compose exec api bash
+cd ./api
+flask db upgrade
+```
 
 Then API endpoints will be availiable at http://localhost:5000/api/
 

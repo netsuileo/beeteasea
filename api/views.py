@@ -132,7 +132,8 @@ def create_transaction():
     if source.user == destination.user:
         cost = 0
     else:
-        cost = SERVICE_FEE * amount
+        cost = int(SERVICE_FEE * amount) or 1
+
     if source.balance - amount - cost < 0:
         return jsonify({'error': 'Source balance is insufficient.'}), 400
 
@@ -158,6 +159,6 @@ def statistics():
     platform_profit = Transaction.query.with_entities(
         db.func.sum(Transaction.cost).label("sum_cost")).one()[0]
     return jsonify({
-        'transactions_amount': transactions_amount,
-        'platform_profit': platform_profit
+        'transactions_amount': transactions_amount or 0,
+        'platform_profit': int(platform_profit) or 0
     })
